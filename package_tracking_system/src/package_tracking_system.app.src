@@ -1,14 +1,21 @@
 {application, package_tracking_system,
- [{description, "An OTP library"},
+ [
+  {description, "An OTP library"},
   {vsn, "0.1.0"},
   {registered, []},
   {applications,
-   [kernel,
-    stdlib
+   [
+    kernel,
+    stdlib,
+    cowboy,   % Add Cowboy dependency
+    ranch     % Add Ranch dependency (Cowboy relies on Ranch)
    ]},
-  {env,[]},
-  {modules, []},
-
+  {env, []},
+  {modules, [
+    package_tracking_system,
+    cowBoyServer
+  ]},
+  {mod, {package_tracking_system, []}},  % Main module that implements start/2
   {licenses, ["Apache 2.0"]},
   {links, []}
  ]}.
