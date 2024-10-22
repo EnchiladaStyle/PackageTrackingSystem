@@ -11,33 +11,21 @@
 
 %% Public API
 
-% start_link(Truck_ID) ->
-%     gen_server:start_link({local, Truck_ID}, ?MODULE, [], []).
 start_link(Truck_ID) ->
     %% Convert Truck_ID to an atom for registration
     TruckAtom = list_to_atom(integer_to_list(Truck_ID)),
     gen_server:start_link({local, TruckAtom}, ?MODULE, [], []).
 
 
-% stop(Truck_ID) ->
-%     gen_server:call(Truck_ID, stop).
-
-% set_location(Truck_ID, Latitude, Longitude) ->
-%     gen_server:cast(Truck_ID, {set_location, Latitude, Longitude}).
-
-% get_location(Truck_ID) ->
-%     gen_server:call(Truck_ID, get_location).
 
 stop(Truck_ID) ->
     TruckAtom = list_to_atom(integer_to_list(Truck_ID)),
     gen_server:call(TruckAtom, stop).
-
+    
 set_location(Truck_ID, Latitude, Longitude) ->
     TruckAtom = list_to_atom(integer_to_list(Truck_ID)),
-    gen_server:call(TruckAtom, {set_location, Latitude, Longitude}),
-    io:format("decoded JSON. Body: ~f~f~p. Success", [Longitude, Latitude, Truck_ID]).
-
-
+    gen_server:call(TruckAtom, {set_location, Latitude, Longitude}).
+    
 get_location(Truck_ID) ->
     TruckAtom = list_to_atom(integer_to_list(Truck_ID)),
     gen_server:call(TruckAtom, get_location).
