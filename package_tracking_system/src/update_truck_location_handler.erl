@@ -6,22 +6,20 @@
 init(Req, State) ->
     %% Read the body of the POST request
     {ok, Body, Req1} = cowboy_req:read_body(Req),
-
-    %% Log the body to confirm we received it correctly
-    io:format("Received Body: ~s~n", [Body]),
-
-    %% Try to decode the JSON body (assuming it's a JSON-encoded string)
+    %% Try to decode the JSON body
     case jsx:decode(Body, [return_maps]) of
-        %% If successful, log the truck_id, lattitude, and longitude
-        #{<<"truck_id">> := TruckId, <<"lattitude">> := Lattitude, <<"longitude">> := Longitude} ->
-            io:format("Parsed Data - Truck ID: ~p, Lattitude: ~p, Longitude: ~p~n", [TruckId, Lattitude, Longitude]),
-
-            %% Respond with success after logging
+        #{<<"truck_id">> := TruckId, <<"lattitude">> := Latitude, <<"longitude">> := Longitude} ->
+            %% Ensure the truck process exists (create if necessary)
+            {ok, _TruckPid} = cowBoyServer:ensure_truck_process(TruckId),
+            %% Update the truck's location
+            truck_tracker:set_location(TruckId, Latitude, Longitude),
+            io:format("decoded JSON. Body: ~p~f~f. Success", [TruckId, Latitude, Longitude]),
+            %% Respond with success
             ResponseBody = <<"{\"status\":\"success\"}">>,
             Req2 = cowboy_req:reply(200, #{<<"content-type">> => <<"application/json">>}, ResponseBody, Req1),
             {ok, Req2, State};
 
-        %% If there's an error decoding the JSON, log the error
+        %% If there's an error decoding the JSON
         Error ->
             io:format("Failed to decode JSON. Body: ~s. Error: ~p~n", [Body, Error]),
             Req2 = cowboy_req:reply(400, #{<<"content-type">> => <<"application/json">>}, <<"{\"error\":\"Invalid JSON\"}">>, Req1),
