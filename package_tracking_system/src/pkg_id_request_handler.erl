@@ -2,45 +2,41 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, init/1, handle_call/3, handle_cast/2, terminate/2, code_change/3]).
--export([send_request/1]).
+-export([start_link/1, send_request/2]).
 
-%% State: Keep track of next process to send the request
--record(state, {workers, index}).
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
-start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+%% Record for maintaining state
+-record(state, {workers, count=0}).
 
-%% List of worker pids for round robin distribution
-init([]) ->
-    Workers = start_workers(1000),  % Assuming we have 1000 worker processes in Code File Two
-    {ok, #state{workers = Workers, index = 1}}.
+%% Start the request handler
+start_link(Workers) ->
+    gen_server:start_link(?MODULE, Workers, []).
 
-send_request(PackageId) ->
-    gen_server:cast(?MODULE, {request, PackageId}).
+%% Client API to send request
+send_request(Pid, PackageId) ->
+    gen_server:call(Pid, {send_request, PackageId}).
 
-%% Pick next worker and send the request in a round robin way
-handle_cast({request, PackageId}, #state{workers=Workers, index=Index} = State) ->
-    NextWorker = lists:nth(Index, Workers),
-    NextIndex = if Index == length(Workers) -> 1; true -> Index + 1 end,
-    NextWorker ! {process_request, PackageId},
-    {noreply, State#state{index = NextIndex}}.
+%% Callbacks
+init(Workers) ->
+    {ok, #state{workers = Workers}}.
 
-%% Handling synchronous calls
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call({send_request, PackageId}, _From, State = #state{workers=Workers, count=Count}) ->
+    %% Round-robin: Pick a worker based on the count
+    Worker = lists:nth((Count rem length(Workers)) + 1, Workers),
+    Worker ! {new_package, PackageId},
+    %% Update state to keep track of next worker
+    {reply, ok, State#state{count = Count + 1}}.
 
-%% Handling other callbacks
-terminate(_Reason, _State) -> ok.
-code_change(_OldVsn, State, _Extra) -> {ok, State}.
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
-%% Function to start worker processes
-start_workers(Num) ->
-    [spawn(fun worker_loop/0) || _ <- lists:seq(1, Num)].
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-worker_loop() ->
-    receive
-        {process_request, PackageId} ->
-            %% Process the package request here
-            worker_loop()
-    end.
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.

@@ -2,36 +2,49 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+-export([start_link/1, update_package/6]).
 
-start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
+%% Client API
+start_link(Name) ->
+    gen_server:start_link({local, Name}, ?MODULE, [], []).
+
+%% This function is called to send an update request to the server
+update_package(Name, PackageId, WarehouseId, Latitude, Longitude, State) ->
+    gen_server:call(Name, {update, PackageId, WarehouseId, Latitude, Longitude, State}).
+
+%% Server callback - initialization
 init([]) ->
-    {ok, []}.
+    {ok, #{} }.
 
-handle_info({process_update, {PackageId, WarehouseId, Latitude, Longitude, State}}, State) ->
-    %% Analyze state and apply logic
-    NewState = case WarehouseId of
-        <<"TRU", _/binary>> -> "Out for Delivery";
-        _ -> case State of
-            "Out for Delivery" -> "Delivered";
-            _ -> State
-        end
+%% Handle the update request
+handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From, State) ->
+    %% Analyze and change the state
+    NewState = case lists:prefix("TRU", WarehouseId) of
+        true -> "Out for Delivery";
+        _ -> case maps:get(PackageId, State, #{}) of
+                #{state := "Out for Delivery"} -> "Delivered";
+                _ -> "In Transit"
+             end
     end,
-    %% Update the Riak entry
-    update_riak(PackageId, {WarehouseId, Latitude, Longitude, NewState}),
-    {noreply, State}.
+    %% Update the package data in the Riak database
+    UpdatedData = #{warehouse_id => WarehouseId, latitude => Latitude, longitude => Longitude, state => NewState},
+    %% Mocking database interaction here: You will replace this with actual Riak interaction
+    io:format("Updating Riak for ~p with data: ~p~n", [PackageId, UpdatedData]),
 
-terminate(_Reason, _State) -> ok.
-
-handle_call(_Request, _From, State) ->
+    %% Update the internal state (if needed)
     {reply, ok, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-%% Helper function to write package data to Riak
-update_riak(PackageId, {WarehouseId, Latitude, Longitude, NewState}) ->
-    %% Logic to update Riak database with the new package information
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
     ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.

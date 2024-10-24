@@ -2,45 +2,42 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, init/1, handle_call/3, handle_cast/2, terminate/2, code_change/3]).
--export([send_update/1]).
+-export([start_link/1, send_update_request/2]).
 
-%% State: Keep track of next process to send the request
--record(state, {workers, index}).
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
-start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+%% Record to store state
+-record(state, {workers, count=0}).
 
-%% List of worker pids for round robin distribution
-init([]) ->
-    Workers = start_workers(1000),  % Assuming 1000 worker processes in Code File Four
-    {ok, #state{workers = Workers, index = 1}}.
+%% API to start the request handler
+start_link(Workers) ->
+    gen_server:start_link(?MODULE, Workers, []).
 
-send_update(Data) ->
-    gen_server:cast(?MODULE, {update_request, Data}).
+%% Public API to send an update request
+send_update_request(Pid, {PackageId, WarehouseId, Latitude, Longitude, State}) ->
+    gen_server:call(Pid, {send_update, PackageId, WarehouseId, Latitude, Longitude, State}).
 
-%% Pick next worker and send the request in a round robin way
-handle_cast({update_request, Data}, #state{workers=Workers, index=Index} = State) ->
-    NextWorker = lists:nth(Index, Workers),
-    NextIndex = if Index == length(Workers) -> 1; true -> Index + 1 end,
-    NextWorker ! {process_update, Data},
-    {noreply, State#state{index = NextIndex}}.
+%% Callbacks
+init(Workers) ->
+    {ok, #state{workers = Workers}}.
 
-%% Handling synchronous calls
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call({send_update, PackageId, WarehouseId, Latitude, Longitude, State}, _From, State = #state{workers=Workers, count=Count}) ->
+    %% Round-robin dispatch
+    Worker = lists:nth((Count rem length(Workers)) + 1, Workers),
+    %% Send the update request to the selected worker
+    Worker ! {update_package, PackageId, WarehouseId, Latitude, Longitude, State},
+    %% Increment the counter to ensure round-robin distribution
+    {reply, ok, State#state{count = Count + 1}}.
 
-%% Handling other callbacks
-terminate(_Reason, _State) -> ok.
-code_change(_OldVsn, State, _Extra) -> {ok, State}.
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
-%% Function to start worker processes
-start_workers(Num) ->
-    [spawn(fun worker_loop/0) || _ <- lists:seq(1, Num)].
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-worker_loop() ->
-    receive
-        {process_update, Data} ->
-            %% Process the update
-            worker_loop()
-    end.
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
