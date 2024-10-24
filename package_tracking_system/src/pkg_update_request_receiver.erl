@@ -24,9 +24,9 @@ handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From
     %% Analyze and change the state
     NewState = case lists:prefix("TRU", WarehouseId) of
         true -> "Out for Delivery";
-        _ -> case maps:get(PackageId, State, #{}) of
-                #{state := "Out for Delivery"} -> "Delivered";
-                _ -> "In Transit"
+        _ -> case lists:prefix("TRU", WarehouseId) of
+                true ->  "Delivered";
+                _ -> State
              end
     end,
     %% Update the package data in the Riak database
