@@ -23,11 +23,16 @@ init(Workers) ->
     {ok, #state{workers = Workers}}.
 
 handle_call({send_request, PackageId}, _From, State = #state{workers=Workers, count=Count}) ->
-    %% Round-robin: Pick a worker based on the count
-    Worker = lists:nth((Count rem length(Workers)) + 1, Workers),
-    Worker ! {new_package, PackageId},
-    %% Update state to keep track of next worker
-    {reply, ok, State#state{count = Count + 1}}.
+    case Workers of
+        [] ->
+            {reply, {error, no_workers_available}, State};
+        _ ->
+            %% Round-robin: Pick a worker based on the count
+            Worker = lists:nth((Count rem length(Workers)) + 1, Workers),
+            Worker ! {new_package, PackageId},
+            %% Update state to keep track of next worker
+            {reply, ok, State#state{count = Count + 1}}
+    end.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
