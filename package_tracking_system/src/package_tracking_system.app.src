@@ -8,7 +8,7 @@
     kernel,
     stdlib,
     cowboy,   % Add Cowboy dependency
-    ranch     % Add Ranch dependency (Cowboy relies on Ranch)
+    ranch   % Add Ranch dependency (Cowboy relies on Ranch)
    ]},
   {env, []},
   {modules, [
