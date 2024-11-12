@@ -24,7 +24,7 @@ handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From
     %% Analyze and change the state
     NewState = case lists:prefix("TRU", WarehouseId) of
         true -> "Out for Delivery";
-        _ -> case lists:prefix("TRU", WarehouseId) of
+        _ -> case lists:prefix("DEL", WarehouseId) of
                 true ->  "Delivered";
                 _ -> State
              end
