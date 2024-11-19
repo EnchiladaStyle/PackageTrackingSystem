@@ -12,9 +12,11 @@
 %% Public API
 
 start_link(Truck_ID) ->
-    %% Convert Truck_ID to an atom for registration
-    TruckAtom = convert_to_atom(Truck_ID),
-    gen_server:start_link({local, TruckAtom}, ?MODULE, [], []).
+    %% Ensure Truck_ID is converted to an atom for registration
+    _TruckAtom = case Truck_ID of
+        <<_Bin/binary>> -> binary_to_atom(Truck_ID, utf8);  % Handle binary input
+        _ -> list_to_atom(integer_to_list(Truck_ID))        % Handle integer input
+    end.
 
 stop(Truck_ID) ->
     TruckAtom = convert_to_atom(Truck_ID),
