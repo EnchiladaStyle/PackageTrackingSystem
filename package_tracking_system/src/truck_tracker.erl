@@ -13,10 +13,10 @@
 
 start_link(Truck_ID) ->
     %% Ensure Truck_ID is converted to an atom for registration
-    TruckAtom = case Truck_ID of
+    _TruckAtom = case Truck_ID of
         <<_Bin/binary>> -> binary_to_atom(Truck_ID, utf8);  % Handle binary input
         _ -> list_to_atom(integer_to_list(Truck_ID))        % Handle integer input
-    end,
+    end.
 
 stop(Truck_ID) ->
     TruckAtom = convert_to_atom(Truck_ID),
