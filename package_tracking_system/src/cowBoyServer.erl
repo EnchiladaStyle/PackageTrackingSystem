@@ -9,7 +9,9 @@ start() ->
     Dispatch = cowboy_router:compile([
         {'_', [
             {"/updateTruckLocation", update_truck_location_handler, []},
-            {"/hello", hello_world_handler, []}
+            {"/hello", hello_world_handler, []},
+            {"/pkg_update", pkg_update_request_handler, []},
+            {"/pkg_id", pkg_id_request_handler, []}
         ]}
     ]),
     {ok, _} = cowboy:start_clear(http_listener, [{port, 8080}], #{
