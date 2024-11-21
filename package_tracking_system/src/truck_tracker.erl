@@ -11,12 +11,11 @@
 
 %% Public API
 
+
 start_link(Truck_ID) ->
-    %% Ensure Truck_ID is converted to an atom for registration
-    _TruckAtom = case Truck_ID of
-        <<_Bin/binary>> -> binary_to_atom(Truck_ID, utf8);  % Handle binary input
-        _ -> list_to_atom(integer_to_list(Truck_ID))        % Handle integer input
-    end.
+    %% Convert Truck_ID to an atom for registration
+    TruckAtom = convert_to_atom(Truck_ID),
+    gen_server:start_link({local, TruckAtom}, ?MODULE, [], []).
 
 stop(Truck_ID) ->
     TruckAtom = convert_to_atom(Truck_ID),
@@ -31,13 +30,19 @@ get_location(Truck_ID) ->
     io:format("get_location called with TruckAtom: ~p~n", [TruckAtom]),
     gen_server:call(TruckAtom, get_location).
 
-%% Utility function to convert Truck_ID to an atom
+% Utility function to convert Truck_ID to an atom
 convert_to_atom(Truck_ID) ->
-    io:format("convert_to_atom received Truck_ID: ~p~n", [Truck_ID]),
     case Truck_ID of
-        <<_Bin/binary>> -> list_to_atom(binary_to_list(Truck_ID)); % Handle valid binary Truck_ID
-        [_|_] -> list_to_atom(Truck_ID);                          % Handle valid string Truck_ID
-        _ -> error({invalid_truck_id, <<"Truck ID must be a string or binary">>})
+        <<_Bin/binary>> -> safe_list_to_atom(binary_to_list(Truck_ID));
+        [_|_] -> safe_list_to_atom(Truck_ID);
+        _ -> throw({error, invalid_truck_id})
+    end.
+
+safe_list_to_atom(List) ->
+    try list_to_atom(List) of
+        Atom -> Atom
+    catch
+        error:_ -> throw({error, atom_limit_reached})
     end.
 
 
