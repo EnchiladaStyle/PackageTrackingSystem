@@ -40,7 +40,7 @@ handle_cast({store_package, PackageId}, State) ->
     PackageData = {WarehouseId, Latitude, Longitude, StateData},
 
     %% Convert data to a binary term for Riak
-    Bucket = <<"packages">>,
+    Bucket = <<"default">>,
     Key = binary:encode_unsigned(PackageId), %% Package Id is the Key
     Value = term_to_binary(PackageData),
     

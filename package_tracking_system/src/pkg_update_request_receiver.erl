@@ -47,13 +47,13 @@ handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From
     RiakPid = maps:get(riak_pid, State),
 
     %% Fetch the old object
-    {ok, Obj} = riak_pb_socket:get(RiakPid, <<"packages">>, PackageId),
+    {ok, Obj} = riakc_pb_socket:get(RiakPid, <<"default">>, PackageId),
 
     %% Create a new object with the updated value
     UpdatedObj = riak_object:update_value(Obj, UpdatedData),
 
     %% Store the updated object back to Riak
-    {ok, _} = riak_pb_socket:put(RiakPid, UpdatedObj),
+    {ok, _} = riakc_pb_socket:put(RiakPid, UpdatedObj),
 
     %% Update the internal state (if needed)
     {reply, ok, State}.
