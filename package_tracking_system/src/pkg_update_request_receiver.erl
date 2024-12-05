@@ -21,7 +21,14 @@ update_package(Name, PackageId, WarehouseId, Latitude, Longitude, State) ->
 
 %% Server callback - initialization
 init([]) ->
-    {ok, #{} }.
+    %% Start the Riak client application
+    ok = application:start(riakc),
+
+    %% Connect to the database
+    {ok, RiakPid} = riakc_pb_socket:start_link(?RIAK_HOST, ?RIAK_PORT),
+
+    %% Store the Pid in ther server's state
+    {ok, #{riak_pid => RiakPid}}.
 
 %% Handle the update request
 handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From, State) ->
@@ -35,8 +42,18 @@ handle_call({update, PackageId, WarehouseId, Latitude, Longitude, _State}, _From
     end,
     %% Update the package data in the Riak database
     UpdatedData = #{warehouse_id => WarehouseId, latitude => Latitude, longitude => Longitude, state => NewState},
-    %% Mocking database interaction here: You will replace this with actual Riak interaction
-    io:format("Updating Riak for ~p with data: ~p~n", [PackageId, UpdatedData]),
+
+    %% Get Riak connection from the state
+    RiakPid = maps:get(riak_pid, State),
+
+    %% Fetch the old object
+    {ok, Obj} = riak_pb_socket:get(RiakPid, <<"packages">>, PackageId),
+
+    %% Create a new object with the updated value
+    UpdatedObj = riak_object:update_value(Obj, UpdatedData),
+
+    %% Store the updated object back to Riak
+    {ok, _} = riak_pb_socket:put(RiakPid, UpdatedObj),
 
     %% Update the internal state (if needed)
     {reply, ok, State}.
