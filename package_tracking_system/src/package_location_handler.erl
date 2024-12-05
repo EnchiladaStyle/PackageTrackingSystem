@@ -89,7 +89,7 @@ extract_package_id(Req) ->
 mock_fetch_package_location(PackageID) ->
     case PackageID of
         12345 -> {ok, "TRU001"};  % Truck ID
-        67890 -> {ok, "123 Main St, City, State"};  % Static location
+        67890 -> {ok, "123 Main St, City, State"}; % Static location
         _ -> {ok, "Unknown Location"}
     end.
 
