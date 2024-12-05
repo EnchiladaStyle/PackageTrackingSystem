@@ -1,26 +1,33 @@
 {"1.2.0",
 [{<<"cowboy">>,{pkg,<<"cowboy">>,<<"2.9.0">>},0},
  {<<"cowlib">>,{pkg,<<"cowlib">>,<<"2.11.0">>},1},
- {<<"hamcrest">>,{pkg,<<"basho_hamcrest">>,<<"0.4.1">>},1},
  {<<"jsx">>,{pkg,<<"jsx">>,<<"3.1.0">>},0},
+ {<<"meck">>,
+  {git,"https://github.com/eproxus/meck.git",
+       {ref,"4ecc1ae9089edc6977e8c8c4cd41081513cc5590"}},
+  3},
+ {<<"protobuffs">>,
+  {git,"https://github.com/basho/erlang_protobuffs.git",
+       {ref,"098efad8f85dfe556d64e2cf6ce31f2075808f67"}},
+  2},
  {<<"ranch">>,{pkg,<<"ranch">>,<<"2.1.0">>},0},
- {<<"riak_pb">>,{pkg,<<"riak_pb">>,<<"2.3.2">>},0},
- {<<"riakc">>,{pkg,<<"riakc">>,<<"2.5.3">>},0}]}.
+ {<<"riak_pb">>,
+  {git,"https://github.com/basho/riak_pb",
+       {ref,"04e8cc7daa081c23be137b1eff2a6a3fb827f8e4"}},
+  1},
+ {<<"riakc">>,
+  {git,"https://github.com/basho/riak-erlang-client.git",
+       {ref,"3b6ad6e92dcb55833e9add829b2871be8468a68e"}},
+  0}]}.
 [
 {pkg_hash,[
  {<<"cowboy">>, <<"865DD8B6607E14CF03282E10E934023A1BD8BE6F6BACF921A7E2A96D800CD452">>},
  {<<"cowlib">>, <<"0B9FF9C346629256C42EBE1EEB769A83C6CB771A6EE5960BD110AB0B9B872063">>},
- {<<"hamcrest">>, <<"FB7B2C92D252A1E9DB936750B86089ADDAEBEB8F87967FB4BBDDA61E8863338E">>},
  {<<"jsx">>, <<"D12516BAA0BB23A59BB35DCCAF02A1BD08243FCBB9EFE24F2D9D056CCFF71268">>},
- {<<"ranch">>, <<"2261F9ED9574DCFCC444106B9F6DA155E6E540B2F82BA3D42B339B93673B72A3">>},
- {<<"riak_pb">>, <<"48FFBF66DBB3F136AB9A7134BAC4E496754BAA5EF58C4F50A61326736D996390">>},
- {<<"riakc">>, <<"6132D9E687A0DFD314B2B24C4594302CA8B55568A5D733C491D8FB6CD4004763">>}]},
+ {<<"ranch">>, <<"2261F9ED9574DCFCC444106B9F6DA155E6E540B2F82BA3D42B339B93673B72A3">>}]},
 {pkg_hash_ext,[
  {<<"cowboy">>, <<"2C729F934B4E1AA149AFF882F57C6372C15399A20D54F65C8D67BEF583021BDE">>},
  {<<"cowlib">>, <<"2B3E9DA0B21C4565751A6D4901C20D1B4CC25CBB7FD50D91D2AB6DD287BC86A9">>},
- {<<"hamcrest">>, <<"26974025BC61BC09EF5B13BE5DCE5035CA11BF37BF4A865E9D86C455C942298F">>},
  {<<"jsx">>, <<"0C5CC8FDC11B53CC25CF65AC6705AD39E54ECC56D1C22E4ADB8F5A53FB9427F3">>},
- {<<"ranch">>, <<"244EE3FA2A6175270D8E1FC59024FD9DBC76294A321057DE8F803B1479E76916">>},
- {<<"riak_pb">>, <<"7C0644BCBA8A423DD9C1AB85B6E7FF4DF0712D8A350F9698647CFF1996F0348C">>},
- {<<"riakc">>, <<"32B3ACED7B749BFFD917153F68FA73C184B09B70EA6F37867DB43DBA273127BF">>}]}
+ {<<"ranch">>, <<"244EE3FA2A6175270D8E1FC59024FD9DBC76294A321057DE8F803B1479E76916">>}]}
 ].
