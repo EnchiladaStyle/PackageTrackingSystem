@@ -1,61 +1,34 @@
+
 -module(pkg_update_request_handler).
-
--behaviour(gen_server).
-
-
-%% API
-
--export([start_link/1, send_update_request/2]).
-
-
-%% gen_server callbacks
-
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
-
-
-%% API to start the request handler
-
-start_link(RecieverPids) ->
-
-    gen_server:start_link(?MODULE, RecieverPids, []).
-
-
-%% Public API to send an update request
-
-send_update_request(Pid, {PackageId, WarehouseId, Latitude, Longitude, State}) ->
-
-    gen_server:call(Pid, {send_update, PackageId, WarehouseId, Latitude, Longitude, State}).
-
-
-%% Callbacks
-
-init(RecieverPids) ->
-
-    {ok, {[], RecieverPids}}.
-
-handle_call(Data, From, {Used, []}) ->
-    handle_call(Data, From, {[], lists:reverse(Used)});
-
-handle_call({send_update, PackageId, WarehouseId, Latitude, Longitude, PackageState}, _From, {Used, [H|T]}) ->
-    pkg_update_request_receiver:update_package(H, PackageId, WarehouseId, Latitude, Longitude, PackageState),
-    {reply, ok, {[H]++ Used, T}}.
+-export([init/2]).
+%% Handler for updating package information
+init(Req, State) ->
+    %% Read and decode the JSON body
+    {ok, Body, Req1} = cowboy_req:read_body(Req),
+    case jsx:decode(Body, [return_maps]) of
+        #{<<"pkg_id">> := PackageId, <<"location_id">> := Lid, <<"latitude">> := Latitude, <<"longitude">> := Longitude, <<"state">> := PkgState} ->
+            %% Ensure the process exists for the package
+            case cowBoyServer:ensure_truck_process(PackageId) of
+                {ok, Pid} ->
+                    %% Send the update request to the process
+                    gen_server:call(Pid, {update, PackageId, Lid, Latitude, Longitude, PkgState}),
+                    %% Respond with success
+                    ResponseBody = <<"{\"status\":\"success\"}">>,
+                    Req2 = cowboy_req:reply(200, #{<<"content-type">> => <<"application/json">>}, ResponseBody, Req1),
+                    {ok, Req2, State};
+                Error ->
+                    %% If there's an issue ensuring the process, return an error
+                    io:format("Failed to start or retrieve process for ~p. Error: ~p~n", [PackageId, Error]),
+                    Req2 = cowboy_req:reply(500, #{<<"content-type">> => <<"application/json">>}, <<"{\"error\":\"Server error\"}">>, Req1),
+                    {ok, Req2, State}
+            end;
+        %% Handle invalid JSON
+        _ ->
+            Req2 = cowboy_req:reply(400, #{<<"content-type">> => <<"application/json">>}, <<"{\"error\":\"Invalid JSON\"}">>, Req1),
+            {ok, Req2, State}
+    end.
 
 
-handle_cast(_Msg, State) ->
-
-    {noreply, State}.
 
 
-handle_info(_Info, State) ->
 
-    {noreply, State}.
-
-
-terminate(_Reason, _State) ->
-
-    ok.
-
-
-code_change(_OldVsn, State, _Extra) ->
-
-    {ok, State}.
